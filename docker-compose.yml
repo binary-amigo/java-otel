@@ -1,0 +1,31 @@
+services:
+  app:
+    build:
+      context: .
+    ports:
+      - "8050:8050"
+    environment:
+      OTEL_SERVICE_NAME: "java-test"
+      OTEL_RESOURCE_ATTRIBUTES: "deployment.environment=staging,service.version=1.0.0"
+      OTEL_TRACES_EXPORTER: "otlp"
+      OTEL_LOGS_EXPORTER: "otlp"
+      OTEL_METRICS_EXPORTER: "otlp"
+      OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: "http://labs.codexray.io:8103/ingest/v1/traces"
+      OTEL_EXPORTER_OTLP_LOGS_ENDPOINT: "http://labs.codexray.io:8103/ingest/v1/logs"
+      OTEL_EXPORTER_OTLP_METRICS_ENDPOINT: "http://labs.codexray.io:8103/ingest/v1/metrics"
+      OTEL_EXPORTER_OTLP_HEADERS: "x-api-key=,X-Metrics-Type=otel"
+      OTEL_EXPORTER_OTLP_PROTOCOL: "http/protobuf"
+    restart: unless-stopped
+
+  load-generator:
+    image: curlimages/curl:8.10.1
+    depends_on:
+      - app
+    environment:
+      APP_URL: "http://app:8050"
+      SLEEP_SECONDS: "2"
+      BAD_QUERY_EVERY: "10"
+    volumes:
+      - ./scripts/load-generator.sh:/load-generator.sh:ro
+    command: ["sh", "/load-generator.sh"]
+    restart: unless-stopped

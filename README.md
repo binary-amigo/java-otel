@@ -10,3 +10,21 @@ OTEL_EXPORTER_OTLP_PROTOCOL=http/protobuf \
 OTEL_METRICS_EXPORTER=otlp \
 OTEL_EXPORTER_OTLP_METRICS_ENDPOINT="http://demo.codexray.io/ingest/v1/metrics" \
 mvn spring-boot:run -Dspring-boot.run.jvmArguments="-javaagent:lib/opentelemetry-javaagent.jar"
+
+## Docker Compose with continuous load
+
+Run the app with the OpenTelemetry Java agent and the configured OTLP exporters:
+
+```bash
+docker compose up --build
+```
+
+The compose file starts:
+
+- `app`: runs `mvn spring-boot:run -Dspring-boot.run.jvmArguments="-javaagent:lib/opentelemetry-javaagent.jar"` on port `8050` with `OTEL_SERVICE_NAME=db-test`.
+- `load-generator`: continuously calls the task API and periodically triggers `/tasks/api/test/bad-query` to produce database error telemetry.
+
+Tune the generator with compose environment variables:
+
+- `SLEEP_SECONDS`: delay between iterations. Defaults to `2`.
+- `BAD_QUERY_EVERY`: trigger the bad-query endpoint every N iterations. Defaults to `10`.
