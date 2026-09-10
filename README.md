@@ -22,9 +22,14 @@ docker compose up --build
 The compose file starts:
 
 - `app`: runs `mvn spring-boot:run -Dspring-boot.run.jvmArguments="-javaagent:lib/opentelemetry-javaagent.jar"` on port `8050` with `OTEL_SERVICE_NAME=db-test`.
-- `load-generator`: continuously calls the task API and periodically triggers `/tasks/api/test/bad-query` to produce database error telemetry.
+- `load-generator`: every 5 minutes, sends 50 requests to each task REST API, intentionally makes 10 of those requests fail for each API, and sends 5 slow database-backed requests where the API takes more than 1 second and the database query takes more than 500 ms.
 
 Tune the generator with compose environment variables:
 
-- `SLEEP_SECONDS`: delay between iterations. Defaults to `2`.
-- `BAD_QUERY_EVERY`: trigger the bad-query endpoint every N iterations. Defaults to `10`.
+- `REQUESTS_PER_API`: total requests per API per cycle. Defaults to `50`.
+- `FAILED_REQUESTS_PER_API`: intentional failed requests per API per cycle. Defaults to `10`.
+- `CYCLE_SECONDS`: cycle duration. Defaults to `300` seconds.
+- `SLOW_REQUESTS_PER_CYCLE`: slow DB requests per cycle. Defaults to `5`.
+- `SLOW_REQUEST_DELAY_MS`: delay applied to each slow DB request. Defaults to `1200` ms.
+- `SLOW_DB_DELAY_MS`: delay executed inside the database query for slow DB requests. Defaults to `600` ms.
+- `REQUEST_TIMEOUT`: curl timeout per generated request. Defaults to `15` seconds.

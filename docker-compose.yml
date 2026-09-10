@@ -23,8 +23,12 @@ services:
       - app
     environment:
       APP_URL: "http://app:8050"
-      SLEEP_SECONDS: "2"
-      BAD_QUERY_EVERY: "10"
+      REQUESTS_PER_API: "50"
+      FAILED_REQUESTS_PER_API: "10"
+      CYCLE_SECONDS: "300"
+      SLOW_REQUESTS_PER_CYCLE: "5"
+      SLOW_REQUEST_DELAY_MS: "1200"
+      SLOW_DB_DELAY_MS: "600"
     volumes:
       - ./scripts/load-generator.sh:/load-generator.sh:ro
     command: ["sh", "/load-generator.sh"]

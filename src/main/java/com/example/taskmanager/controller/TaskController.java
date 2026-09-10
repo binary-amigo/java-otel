@@ -45,7 +45,10 @@ public class TaskController {
 
     @GetMapping("/api")
     @ResponseBody
-    public java.util.List<Task> getAllTasks() {
+    public java.util.List<Task> getAllTasks(@RequestParam(defaultValue = "false") boolean fail) {
+        if (fail) {
+            throw new RuntimeException("Intentional task list failure");
+        }
         return taskService.getAllTasks();
     }
 
@@ -87,15 +90,52 @@ public class TaskController {
         return "redirect:/tasks";
     }
 
+    @GetMapping("/api/test/slow-db-read")
+    @ResponseBody
+    public java.util.Map<String, Object> triggerSlowDbRead(
+            @RequestParam(defaultValue = "1200") long delayMs,
+            @RequestParam(defaultValue = "600") long dbDelayMs) {
+        long normalizedDelayMs = normalizeSlowDelayMs(delayMs);
+        long normalizedDbDelayMs = normalizeSlowDbDelayMs(dbDelayMs, normalizedDelayMs);
+        long count = taskService.runSlowReadQuery(normalizedDelayMs, normalizedDbDelayMs);
+        return java.util.Map.of(
+                "type", "slow-db-read",
+                "delayMs", normalizedDelayMs,
+                "dbDelayMs", normalizedDbDelayMs,
+                "taskCount", count);
+    }
+
+    @GetMapping("/api/test/slow-db-write")
+    @ResponseBody
+    public java.util.Map<String, Object> triggerSlowDbWrite(
+            @RequestParam(defaultValue = "1200") long delayMs,
+            @RequestParam(defaultValue = "600") long dbDelayMs) {
+        long normalizedDelayMs = normalizeSlowDelayMs(delayMs);
+        long normalizedDbDelayMs = normalizeSlowDbDelayMs(dbDelayMs, normalizedDelayMs);
+        long count = taskService.runSlowWriteQuery(normalizedDelayMs, normalizedDbDelayMs);
+        return java.util.Map.of(
+                "type", "slow-db-write",
+                "delayMs", normalizedDelayMs,
+                "dbDelayMs", normalizedDbDelayMs,
+                "taskCount", count);
+    }
+
     // Endpoint to trigger a bad SQL query for testing error collection
     @GetMapping("/api/test/bad-query")
     @ResponseBody
-    public String triggerBadQuery() {
-        try {
+    public String triggerBadQuery(@RequestParam(defaultValue = "true") boolean fail) {
+        if (fail) {
             taskService.triggerBadQuery();
             return "Query executed successfully";
-        } catch (Exception e) {
-            return "Error occurred: " + e.getMessage();
         }
+        return "Bad query skipped";
     }
-} 
+
+    private long normalizeSlowDelayMs(long delayMs) {
+        return Math.max(1100, Math.min(delayMs, 10000));
+    }
+
+    private long normalizeSlowDbDelayMs(long dbDelayMs, long delayMs) {
+        return Math.max(600, Math.min(dbDelayMs, delayMs));
+    }
+}
