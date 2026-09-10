@@ -1,20 +1,27 @@
 services:
   app:
     build:
-      context: .
+      context: ./TaskManager.Api
     ports:
-      - "8050:8050"
+      - "8051:8050"
     environment:
-      OTEL_SERVICE_NAME: "java-test"
+      ASPNETCORE_ENVIRONMENT: Production
+      OTEL_SERVICE_NAME: "task-manager-dotnet"
       OTEL_RESOURCE_ATTRIBUTES: "deployment.environment=staging,service.version=1.0.0"
-      OTEL_TRACES_EXPORTER: "otlp"
-      OTEL_LOGS_EXPORTER: "otlp"
-      OTEL_METRICS_EXPORTER: "otlp"
+      OTEL_DOTNET_AUTO_TRACES_ADDITIONAL_SOURCES: "TaskManager.Api"
+      OTEL_DOTNET_AUTO_METRICS_ADDITIONAL_SOURCES: "TaskManager.Api"
+      OTEL_TRACES_EXPORTER: otlp
+      OTEL_METRICS_EXPORTER: otlp
+      OTEL_LOGS_EXPORTER: otlp
+      OTEL_EXPORTER_OTLP_PROTOCOL: http/protobuf
       OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: "http://labs.codexray.io:8103/ingest/v1/traces"
       OTEL_EXPORTER_OTLP_LOGS_ENDPOINT: "http://labs.codexray.io:8103/ingest/v1/logs"
       OTEL_EXPORTER_OTLP_METRICS_ENDPOINT: "http://labs.codexray.io:8103/ingest/v1/metrics"
       OTEL_EXPORTER_OTLP_HEADERS: "x-api-key=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjIxMDMwMjg4MDIsImlhdCI6MTc4NzY2ODgwMiwicHJvamVjdF9pZCI6ImhiYWhsNDFkIiwidGVuYW50X2lkIjoidjc3d2kzaGciLCJ0eXBlIjoicHJvamVjdF9hcGlfa2V5In0.GtL6CMCBnmLcdvRonegM68z4Sfeb4XoeB9ihmIDCfuA,X-Metrics-Type=otel"
-      OTEL_EXPORTER_OTLP_PROTOCOL: "http/protobuf"
+    volumes:
+      - task-data:/app/data
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     restart: unless-stopped
 
   load-generator:
@@ -22,14 +29,17 @@ services:
     depends_on:
       - app
     environment:
-      APP_URL: "http://app:8050"
-      REQUESTS_PER_API: "50"
-      FAILED_REQUESTS_PER_API: "10"
-      CYCLE_SECONDS: "300"
-      SLOW_REQUESTS_PER_CYCLE: "5"
-      SLOW_REQUEST_DELAY_MS: "1200"
-      SLOW_DB_DELAY_MS: "600"
+      APP_URL: http://app:8050
+      REQUESTS_PER_API: "${REQUESTS_PER_API:-50}"
+      FAILED_REQUESTS_PER_API: "${FAILED_REQUESTS_PER_API:-10}"
+      CYCLE_SECONDS: "${CYCLE_SECONDS:-300}"
+      SLOW_REQUESTS_PER_CYCLE: "${SLOW_REQUESTS_PER_CYCLE:-5}"
+      SLOW_REQUEST_DELAY_MS: "${SLOW_REQUEST_DELAY_MS:-1200}"
+      SLOW_DB_DELAY_MS: "${SLOW_DB_DELAY_MS:-600}"
     volumes:
       - ./scripts/load-generator.sh:/load-generator.sh:ro
     command: ["sh", "/load-generator.sh"]
     restart: unless-stopped
+
+volumes:
+  task-data:
