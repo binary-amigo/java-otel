@@ -17,7 +17,7 @@ services:
       OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: "http://labs.codexray.io:8103/ingest/v1/traces"
       OTEL_EXPORTER_OTLP_LOGS_ENDPOINT: "http://labs.codexray.io:8103/ingest/v1/logs"
       OTEL_EXPORTER_OTLP_METRICS_ENDPOINT: "http://labs.codexray.io:8103/ingest/v1/metrics"
-      OTEL_EXPORTER_OTLP_HEADERS: "x-api-key=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjIxMDMwMjg4MDIsImlhdCI6MTc4NzY2ODgwMiwicHJvamVjdF9pZCI6ImhiYWhsNDFkIiwidGVuYW50X2lkIjoidjc3d2kzaGciLCJ0eXBlIjoicHJvamVjdF9hcGlfa2V5In0.GtL6CMCBnmLcdvRonegM68z4Sfeb4XoeB9ihmIDCfuA,X-Metrics-Type=otel"
+      OTEL_EXPORTER_OTLP_HEADERS: "x-api-key=,X-Metrics-Type=otel"
     volumes:
       - task-data:/app/data
     extra_hosts:
